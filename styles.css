@@ -20,3 +20,328 @@ details.panel>summary{cursor:pointer;font-weight:850;font-size:16px;list-style-p
 @media (max-width:800px){.sidebar{display:none}.topbar{height:61px;justify-content:space-between;padding:0 18px}.mobile-brand{display:block}.content{padding:25px 15px 105px}.bottom-nav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;z-index:50;bottom:0;left:0;right:0;background:rgba(17,24,35,.97);backdrop-filter:blur(14px);border-top:1px solid var(--border);padding:8px 5px max(8px,env(safe-area-inset-bottom))}.bottom-button{border:0;background:transparent;color:#899bae;display:grid;justify-items:center;gap:3px;padding:4px 1px;font-size:12px;border-radius:10px;min-height:46px}.bottom-button.active{color:var(--lime)}.bottom-button>span{font-size:22px;line-height:1}.bottom-button small{font-size:10px;font-weight:750}.two-column{grid-template-columns:1fr}.page-heading{margin-bottom:20px}.panel{padding:19px}.stat-grid{gap:11px}.stat-card{padding:17px}.toast{bottom:86px;right:12px}.topbar .chip{font-size:8px;letter-spacing:.5px;padding:7px}.history-grid{grid-template-columns:1fr}}
 @media (max-width:460px){.stat-card .stat-value{font-size:26px}.stat-card.hero-card .stat-value{font-size:29px}.form-row.triple{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.form-row.triple input{padding:9px 6px!important}.macro-pill{padding:13px 5px}.macro-pill b{font-size:17px}.set-row,.set-row-legend{grid-template-columns:49px 1fr 1fr 31px;gap:6px}.profile-dialog{padding:18px 16px;max-height:95dvh}.profile-form .form-row:not(.triple){grid-template-columns:1fr}.week-row{grid-template-columns:1fr auto;gap:5px}.week-row>small:last-child{grid-column:1/-1}.date-badge{display:none}.quick-links{gap:7px}.quick-links button{font-size:11px;padding:10px 5px}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/*
+  IBAM Track — Visual Hierarchy Refresh v1.2
+  Four core colors: canvas #F6F8F6, surface #FFFFFF,
+  text #1E312A, accent #117763.
+  Semantic colors (warnings/errors/chart comparison) are exceptions,
+  used only when they communicate a specific meaning.
+*/
+:root {
+  color-scheme: light;
+  --bg: #F6F8F6;
+  --panel: #FFFFFF;
+  --panel2: #F0F4F1;
+  --border: #DEE8E2;
+  --muted: #62766E;
+  --text: #1E312A;
+  --lime: #117763;
+  --limeink: #FFFFFF;
+  --blue: #386E7F;
+  --orange: #A7632E;
+  --red: #BA424A;
+  --radius: 18px;
+  --shadow: 0 3px 18px rgba(20, 57, 44, 0.035);
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+::selection { background: #C8EBDB; color: #143C31; }
+:focus-visible { outline-color: var(--lime); }
+
+/* Foundation: surfaces are quiet; navigation creates orientation. */
+.sidebar {
+  background: #FFFFFF;
+  border-right: 1px solid var(--border);
+}
+.brand-mark {
+  background: #15594B;
+  color: #FFFFFF;
+  box-shadow: 0 5px 12px rgba(17, 84, 69, 0.14);
+}
+.brand-spark { color: #B4E2CA; }
+.brand strong { color: var(--text); letter-spacing: .3px; }
+.brand small { color: var(--muted); letter-spacing: 1.15px; }
+.side-caption { color: #768A81; }
+.nav-button {
+  color: #536B60;
+  font-weight: 650;
+  border-radius: 11px;
+}
+.nav-button:hover,
+.bottom-button:hover { background: #F0F5F1; color: #1E5549; }
+.nav-button.active {
+  background: #E5F3EC;
+  color: #106652;
+  font-weight: 800;
+  box-shadow: inset 3px 0 0 #117763;
+}
+.side-foot { color: var(--muted); }
+.side-foot small { color: #75867D; }
+.local-dot { background: #23866D; box-shadow: none; }
+.topbar {
+  background: rgba(255, 255, 255, .92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+.chip,.date-badge { background: #FFFFFF; color: #60766A; border-color: var(--border); letter-spacing: .4px; }
+.live-chip { background: #E9F5EE; color: #156851; border-color: #D3E9DC; }
+.avatar-button { background: #E3F1E9; border: 1px solid #C6DFD1; color: #175F4D; }
+.mobile-brand { color: var(--text); }
+.mobile-brand span { color: var(--lime); }
+
+/* Type scale: one big page heading, restrained cards and helpful labels. */
+h1 { color: var(--text); font-size: clamp(29px, 3.1vw, 38px); letter-spacing: -1.25px; font-weight: 800; }
+h2 { color: var(--text); font-size: 17px; letter-spacing: -.3px; font-weight: 800; }
+h3 { color: var(--text); }
+.eyebrow { color: #43766A; letter-spacing: 1.65px; font-size: 10px; font-weight: 800; }
+.subheading,.muted { color: var(--muted); }
+.tiny-note,.chart-note,.stat-card .stat-desc { color: #6A7D73; }
+.label-row { color: var(--muted); }
+.label-row strong { color: var(--text); }
+
+/* Card hierarchy: only the daily primary metric gets a strong color. */
+.panel,.stat-card {
+  background: #FFFFFF;
+  border: 1px solid #E1EAE4;
+  box-shadow: var(--shadow);
+}
+.panel-head { margin-bottom: 21px; }
+.panel-head p { color: var(--muted); }
+.panel-icon { color: #166F5C; background: #E9F4ED; border-radius: 11px; }
+.stat-card .stat-label { color: #63776E; font-size: 12px; font-weight: 700; }
+.stat-card .stat-value { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 840; }
+.stat-card .stat-symbol { color: #488778; }
+.stat-card .stat-desc { color: #78887F; }
+.stat-card.hero-card {
+  background: #155649;
+  border-color: #155649;
+  color: #FFFFFF;
+  box-shadow: 0 8px 22px rgba(20, 79, 65, .11);
+}
+.stat-card.hero-card .stat-label,
+.stat-card.hero-card .stat-desc { color: #D1E6DC; }
+.stat-card.hero-card .stat-value,
+.stat-card.hero-card .stat-symbol { color: #FFFFFF; }
+.stat-card.hero-card .stat-value { font-size: 34px; }
+.bar { background: #DFEAE2; }
+.bar-fill { background: var(--lime); }
+.bar-fill.over { background: #B77937; }
+.kpi-box,.macro-pill { background: #F1F5F2; border: 1px solid #E7EEE9; }
+.kpi-value { color: var(--text); font-variant-numeric: tabular-nums; }
+.kpi-label,.macro-caption { color: var(--muted); }
+.macro-total,.macro-pill b { color: var(--text); font-variant-numeric: tabular-nums; }
+.quick-links button { background: #F2F6F3; color: #285345; border-color: #E0EAE4; font-weight: 750; }
+.quick-links button:hover { background: #E8F3ED; border-color: #9FC9B6; }
+
+/* Input contrast: white fields + clear outlines, not black boxes. */
+.field label,.field>.label { color: #344D42; }
+.label-hint { color: var(--muted); }
+input:not([type=checkbox]):not([type=file]), select {
+  background: #FFFFFF;
+  border: 1px solid #C9D9D0;
+  color: var(--text);
+}
+input:not([type=checkbox]):not([type=file]):hover,select:hover { border-color: #9FB8A9; }
+input:not([type=checkbox]):not([type=file]):focus,select:focus {
+  border-color: var(--lime);
+  box-shadow: 0 0 0 3px rgba(17, 119, 99, .12);
+}
+input::placeholder { color: #81918A; }
+input[type=date], input[type=time] { color-scheme: light; }
+select option { background: #FFFFFF; color: var(--text); }
+.check-row { color: #365044; }
+.check-row input { accent-color: var(--lime); }
+
+/* Action hierarchy: teal = primary, tinted = secondary, outline = tertiary. */
+.primary-button {
+  background: #117763;
+  color: #FFFFFF;
+  border: 1px solid #117763;
+  box-shadow: 0 3px 8px rgba(17, 119, 99, .12);
+}
+.primary-button:hover { background: #0E6756; border-color: #0E6756; filter: none; }
+.secondary-button { color: #126B58; background: #E8F3EC; border: 1px solid #D3E5D9; }
+.secondary-button:hover { background: #DDEDE3; }
+.ghost-button { color: #4E655A; background: #FFFFFF; border: 1px solid #CDDDD2; }
+.ghost-button:hover { background: #F3F7F4; }
+.danger-button { color: #A63740; background: #FFF0F0; border: 1px solid #EAC3C5; }
+.danger-button:hover { background: #FFE5E7; }
+.upload-label { color: #126B58; border: 1px dashed #91BCAA; background: #F7FBF8; }
+.preview-box { background: #F0F6F2; color: #344D42; border: 1px solid #DDEBE0; }
+.preview-box strong { color: #0E6D59; }
+.preview-box small { color: #6C8075; }
+
+/* Logs: reduce decoration, use spacing and weight to establish priority. */
+.list-entry,.workout-card { background: #F3F6F3; border: 1px solid #E9EEE9; }
+.list-entry:hover { border-color: #C8DCD0; }
+.entry-title,.entry-number { color: var(--text); }
+.entry-meta { color: var(--muted); }
+.text-button { color: #176D63; }
+.text-button.danger { color: var(--red); }
+.group-heading { color: #60786B; }
+.empty { background: #F8FAF8; color: var(--muted); border: 1px dashed #C7D8CE; }
+.small-badge { color: #196D59; border-color: #D1E8D9; background: #EAF5EE; }
+details.panel>summary { color: var(--text); }
+.week-row { border-color: var(--border); }
+.week-row small,.chart-legend { color: var(--muted); }
+.notes-grid strong { color: var(--text); }
+.set-index,.set-row-legend { color: #6F8077; }
+.mini-remove { border-color: #E8C6C7; background: #FFF1F1; color: var(--red); }
+.set-pill { background: #E5ECE8; color: #385549; }
+.streak-line { background: #EDF4EE; color: #365447; }
+.streak-line b { color: #13715D; }
+.goal-ring { background: conic-gradient(var(--lime) var(--progress), #DFE8E1 0); }
+.goal-ring-inner { background: #FFFFFF; color: var(--text); }
+
+/* Light-theme charts without editing any of the tracking logic. */
+.chart-svg line { stroke: #E0E9E3; }
+.chart-svg text { fill: #73867C; }
+.chart-svg path[stroke="#b7ef72"] { stroke: #117763; }
+.chart-svg path[stroke="#7ebdff"] { stroke: #6F8C99; }
+.chart-svg circle[fill="#b7ef72"] { fill: #117763; stroke: #FFFFFF; }
+.chart-svg circle[fill="#7ebdff"] { fill: #6F8C99; stroke: #FFFFFF; }
+.chart-legend .legend-dot.daily { background: #6F8C99 !important; }
+.chart-legend .legend-dot.average { background: #117763 !important; }
+.chart-legend .legend-dot[style*="#b7ef72"] { background: #117763 !important; }
+.chart-legend .legend-dot[style*="#7ebdff"] { background: #6F8C99 !important; }
+
+/* Modal and feedback surfaces. */
+.profile-dialog {
+  background: #FFFFFF;
+  color: var(--text);
+  border: 1px solid #D7E6DC;
+  box-shadow: 0 25px 70px rgba(16, 39, 31, .16);
+}
+.profile-dialog::backdrop { background: rgba(17, 35, 27, .48); }
+.close-button { background: #F0F4F1; border-color: #DFE9E2; color: #4D675A; }
+.toast { color: #1A5B48; background: #E9F6EC; border: 1px solid #B8D9C5; box-shadow: 0 8px 25px rgba(17, 54, 35, .10); }
+.toast.error { color: #9C303B; background: #FFF0F0; border-color: #E9B6B9; }
+
+/* Bottom navigation has the same color language as the sidebar. */
+@media (max-width: 800px) {
+  .bottom-nav { background: rgba(255, 255, 255, .96); border-top: 1px solid #DDE8E1; }
+  .bottom-button { color: #71857B; }
+  .bottom-button.active { color: #117763; background: #E9F4ED; }
+  .bottom-button:hover { background: #F0F5F1; color: #166A58; }
+  .topbar { background: rgba(255, 255, 255, .96); }
+}
+
+/*
+  IBAM Track — v1.3 ACCENTED ANALOGOUS / pop of coral
+  Visual system:
+    1. Sage        #DAE8DC  quiet background/tints
+    2. Mint        #9EC6AF  supporting green
+    3. Forest teal #246E5B  reading, charts, active state
+    4. Coral       #F07856  high-priority call-to-action only
+  Neutrals (ivory/white/dark ink) support readability.
+  Accent buttons use dark ink because WHITE TEXT ON CORAL DOES NOT
+  meet WCAG AA normal-text contrast. This is intentional.
+*/
+:root {
+  color-scheme: light;
+  --bg: #F7F8F4;
+  --panel: #FFFFFF;
+  --panel2: #F0F5F0;
+  --border: #DFE8E0;
+  --muted: #617669;
+  --text: #20392F;
+  --lime: #246E5B;  /* Historical variable name kept for compatibility */
+  --limeink: #FFFFFF;
+  --blue: #668C7C;  /* Secondary data plot stays in the green family */
+  --orange: #B55D43;
+  --red: #B83D44;  /* Semantic error color, not decoration */
+  --sage: #DAE8DC;
+  --mint: #9EC6AF;
+  --forest: #246E5B;
+  --coral: #F07856;
+  --coral-ink: #331C16;
+  --radius: 18px;
+  --shadow: 0 3px 18px rgba(26, 66, 44, .035);
+}
+body { background: var(--bg); color: var(--text); }
+::selection { background: #FAD6C9; color: #3C261D; }
+.sidebar { border-color: #DFE9DF; }
+.brand-mark { background: #246E5B; box-shadow: 0 6px 16px rgba(36,110,91,.13); }
+.brand-spark { color: #FFD2C4; }
+.nav-button.active {
+  color: #195641;
+  background: #E6F2E9;
+  box-shadow: inset 3px 0 0 #246E5B;
+}
+.nav-button:hover,
+.bottom-button:hover { background: #EFF5EF; color: #246E5B; }
+.mobile-brand span { color: var(--forest); }
+.local-dot { background: #246E5B; }
+.live-chip { color: #246E5B; background: #EDF5EE; border-color: #CFE3D5; }
+.avatar-button { background: #DFEEE4; border-color: #C2DDCC; color: #255C49; }
+.eyebrow { color: #537C69; }
+.panel-icon { color: #246E5B; background: #E9F3EB; }
+.panel,.stat-card { border-color: #E0E9E2; }
+.stat-card.hero-card {
+  background: #245B4C;
+  border-color: #245B4C;
+  box-shadow: 0 10px 25px rgba(27,83,66,.10);
+}
+.stat-card.hero-card .stat-symbol { color: #FFA98E; }
+.stat-card.hero-card .stat-label,
+.stat-card.hero-card .stat-desc { color: #D6E9DF; }
+.bar { background: #E3ECE4; }
+.bar-fill { background: #246E5B; }
+.bar-fill.over { background: #B86746; }
+.kpi-box,.macro-pill { background: #F0F5F0; border-color: #E5EEE6; }
+.quick-links button { background: #F1F6F1; color: #285D4C; border-color: #DFE9E0; }
+.quick-links button:hover { background: #E7F1E9; border-color: #B5D2BD; }
+/* ONE deliberately contrasting action color. Not for every interactive element. */
+.primary-button {
+  color: var(--coral-ink);
+  background: var(--coral);
+  border: 1px solid var(--coral);
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(184,82,57,.11);
+}
+.primary-button:hover {
+  background: #FA9376;
+  border-color: #FA9376;
+  color: #331C16;
+  filter: none;
+  box-shadow: 0 5px 14px rgba(184,82,57,.15);
+}
+.primary-button:active { background: #E36B4B; }
+.primary-button:focus-visible {
+  outline: 3px solid #9E492F;
+  outline-offset: 3px;
+}
+/* Secondary action stays green and tertiary action stays neutral. */
+.secondary-button { background: #E7F2E9; color: #246E5B; border-color: #CEE3D5; }
+.secondary-button:hover { background: #D9EBDD; }
+.ghost-button { background: #FFFFFF; color: #47685A; border-color: #D1E0D4; }
+.ghost-button:hover { background: #F3F7F3; }
+.field label,.field>.label { color: #335444; }
+input:not([type=checkbox]):not([type=file]):focus,
+select:focus { border-color: #246E5B; box-shadow: 0 0 0 3px rgba(36,110,91,.11); }
+.preview-box { background: #EDF5EF; border-color: #DCEBDE; }
+.preview-box strong { color: #246E5B; }
+.small-badge { color: #246E5B; background: #E8F3EA; border-color: #D0E5D6; }
+.streak-line { background: #EDF4ED; }
+.streak-line b { color: #246E5B; }
+.goal-ring { background: conic-gradient(#246E5B var(--progress), #E1EAE2 0); }
+.chart-svg path[stroke="#b7ef72"] { stroke: #246E5B; }
+.chart-svg path[stroke="#7ebdff"] { stroke: #8EAD9B; }
+.chart-svg circle[fill="#b7ef72"] { fill: #246E5B; stroke: #FFFFFF; }
+.chart-svg circle[fill="#7ebdff"] { fill: #8EAD9B; stroke: #FFFFFF; }
+.chart-legend .legend-dot.daily { background: #8EAD9B !important; }
+.chart-legend .legend-dot.average { background: #246E5B !important; }
+.chart-legend .legend-dot[style*="#b7ef72"] { background: #246E5B !important; }
+.chart-legend .legend-dot[style*="#7ebdff"] { background: #8EAD9B !important; }
+.profile-dialog { background: #FFFFFF; border-color: #D9E7DC; }
+.close-button { color: #466455; }
+.toast { background: #EAF4ED; color: #246E5B; }
+@media (max-width: 800px) {
+  .bottom-nav { background: rgba(255,255,255,.97); border-top-color: #DAE7DC; }
+  .bottom-button.active { color: #246E5B; background: #E9F4EC; }
+}
