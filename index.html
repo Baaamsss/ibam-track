@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d111a">
+  <meta name="description" content="IBAM Track: catat kalori, makro, berat badan, tidur, dan progres latihan gym dalam satu dashboard pribadi.">
+  <title>IBAM Track — Human Performance</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#beranda" aria-label="IBAM Track Beranda">
+        <span class="brand-mark">I<span class="brand-spark">•</span></span>
+        <span><strong>IBAM TRACK</strong><small>HUMAN PERFORMANCE</small></span>
+      </a>
+      <p class="side-caption">WORKSPACE</p>
+      <nav class="side-nav" aria-label="Navigasi utama">
+        <button class="nav-button active" data-nav="beranda"><span>◫</span> Beranda</button>
+        <button class="nav-button" data-nav="makanan"><span>◉</span> Makanan</button>
+        <button class="nav-button" data-nav="progres"><span>↗</span> Progres & tidur</button>
+        <button class="nav-button" data-nav="gym"><span>▤</span> Gym log</button>
+        <button class="nav-button" data-nav="pengaturan"><span>⚙</span> Pengaturan</button>
+      </nav>
+      <div class="side-foot">
+        <span class="local-dot"></span><span>Data lokal di perangkat</span>
+        <small>Tanpa akun • Tanpa pelacakan</small>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar">
+        <div class="mobile-brand">IBAM <span>TRACK</span></div>
+        <div class="topbar-right"><span class="chip live-chip">● PERSONAL DASHBOARD</span><button id="openProfile" class="avatar-button" title="Edit profil" aria-label="Edit profil">I</button></div>
+      </header>
+      <main class="content">
+        <section id="page-beranda" class="page active" aria-label="Beranda">
+          <div class="page-heading"><div><p class="eyebrow">PERFORMANCE OVERVIEW</p><h1 id="greeting">Halo, atlet! 👋</h1><p class="subheading">Catat yang penting. Lihat progres sebenarnya.</p></div><span class="date-badge" id="todayLabel"></span></div>
+          <div id="dashboard-content"></div>
+        </section>
+
+        <section id="page-makanan" class="page" aria-label="Log makanan">
+          <div class="page-heading"><div><p class="eyebrow">NUTRITION JOURNAL</p><h1>Catat makanan</h1><p class="subheading">Cari makanan, isi gram, langsung hitung makro.</p></div></div>
+          <div class="two-column">
+            <article class="panel">
+              <div class="panel-head"><div><h2>Tambah makanan</h2><p>Nilai nutrisi berdasarkan 100 gram</p></div><span class="panel-icon">＋</span></div>
+              <form id="foodForm" class="form-stack">
+                <div class="field"><label for="foodDate">Tanggal</label><input id="foodDate" type="date" required></div>
+                <div class="field"><label for="foodSearch">Cari makanan</label><input id="foodSearch" type="search" autocomplete="off" placeholder="Contoh: nasi putih, ayam..." aria-label="Filter daftar makanan"></div>
+                <div class="field"><label for="foodSelect">Pilih dari database</label><select id="foodSelect" required></select></div>
+                <div class="form-row"><div class="field"><label for="foodGrams">Berat (gram)</label><input id="foodGrams" type="number" min="0.1" max="10000" step="0.1" value="200" required></div><div class="field"><label for="foodMeal">Waktu makan</label><select id="foodMeal"><option value="Sarapan">Sarapan</option><option value="Makan siang">Makan siang</option><option value="Makan malam">Makan malam</option><option value="Camilan">Camilan</option></select></div></div>
+                <div id="foodPreview" class="preview-box" aria-live="polite"></div>
+                <button class="primary-button" id="foodSubmit" type="submit">＋ Tambah ke log</button>
+                <button id="cancelFoodEdit" type="button" class="ghost-button hidden">Batal edit</button>
+              </form>
+            </article>
+            <article class="panel">
+              <div class="panel-head"><div><h2>Ringkasan harian</h2><p>Total dari makanan yang tercatat</p></div><span class="panel-icon">◉</span></div>
+              <div id="foodSummary"></div>
+              <div class="inline-actions"><button id="copyYesterday" class="secondary-button" type="button">↻ Salin menu kemarin</button></div>
+            </article>
+          </div>
+          <article class="panel space-top"><div class="panel-head"><div><h2>Riwayat makan</h2><p>Bisa dikoreksi atau dihapus kapan saja</p></div></div><div id="foodList"></div></article>
+          <details class="panel space-top"><summary>＋ Tambahkan makanan sendiri ke database</summary><p class="muted">Kalau makanan belum tersedia, simpan nilai per 100 gram. Untuk masakan rumahan, angka hanya perkiraan dan dipengaruhi minyak, saus, serta resep.</p>
+            <form id="customFoodForm" class="form-stack compact-form">
+              <div class="field"><label for="customName">Nama makanan</label><input id="customName" required maxlength="75" placeholder="Contoh: ayam teriyaki rumahan"></div>
+              <div class="form-row"><div class="field"><label for="customKcal">Kalori / 100g</label><input id="customKcal" type="number" min="0" max="1000" step="0.1" required></div><div class="field"><label for="customProtein">Protein (g)</label><input id="customProtein" type="number" min="0" max="100" step="0.1" required></div></div>
+              <div class="form-row"><div class="field"><label for="customCarbs">Karbo (g)</label><input id="customCarbs" type="number" min="0" max="100" step="0.1" required></div><div class="field"><label for="customFat">Lemak (g)</label><input id="customFat" type="number" min="0" max="100" step="0.1" required></div></div>
+              <div class="field"><label for="customSource">Catatan sumber (opsional)</label><input id="customSource" maxlength="130" placeholder="Label gizi / resep / estimasi"></div>
+              <button class="secondary-button" type="submit">Simpan makanan pribadi</button>
+            </form>
+            <div id="customFoodList" class="custom-list"></div>
+          </details>
+        </section>
+
+        <section id="page-progres" class="page" aria-label="Progres dan tidur">
+          <div class="page-heading"><div><p class="eyebrow">BODY & RECOVERY</p><h1>Progres & pemulihan</h1><p class="subheading">Fokus pada tren, bukan angka sehari.</p></div></div>
+          <div class="two-column">
+            <article class="panel"><div class="panel-head"><div><h2>Log berat badan</h2><p>Sebaiknya ditimbang pada kondisi konsisten</p></div><span class="panel-icon">↗</span></div><form id="weightForm" class="form-stack"><div class="field"><label for="weightDate">Tanggal</label><input id="weightDate" type="date" required></div><div class="field"><label for="weightValue">Berat (kg)</label><input id="weightValue" type="number" min="20" max="400" step="0.01" placeholder="78.20" required></div><button class="primary-button" type="submit">Simpan berat badan</button></form><p class="tiny-note">Memasukkan tanggal yang sama akan memperbarui berat yang lama.</p></article>
+            <article class="panel"><div class="panel-head"><div><h2>Tren berat badan</h2><p>Harian dan rata-rata bergerak 7 hari</p></div></div><div id="weightStats"></div><div id="weightChart" class="chart-wrap"></div></article>
+          </div>
+          <article class="panel space-top"><div class="panel-head"><div><h2>Rata-rata per minggu</h2><p>Senin–Minggu • berdasarkan hari dengan data</p></div></div><div id="weeklyWeight"></div></article>
+          <div class="two-column space-top">
+            <article class="panel"><div class="panel-head"><div><h2>Log tidur</h2><p>Tanggal mengacu pada hari bangun</p></div><span class="panel-icon">☾</span></div><form id="sleepForm" class="form-stack"><div class="field"><label for="sleepDate">Tanggal bangun</label><input id="sleepDate" type="date" required></div><div class="form-row"><div class="field"><label for="bedTime">Mulai tidur</label><input id="bedTime" type="time" value="23:00" required></div><div class="field"><label for="wakeTime">Bangun</label><input id="wakeTime" type="time" value="07:00" required></div></div><div class="field"><label for="sleepQuality">Kualitas tidur (opsional)</label><select id="sleepQuality"><option value="">Tidak dinilai</option><option value="1">Buruk</option><option value="2">Kurang</option><option value="3">Biasa</option><option value="4">Baik</option><option value="5">Sangat baik</option></select></div><button class="primary-button" type="submit">Simpan tidur</button></form><p class="tiny-note">Durasi dihitung dari jam mulai tidur ke jam bangun. Belum memperhitungkan waktu terjaga di tengah malam.</p></article>
+            <article class="panel"><div class="panel-head"><div><h2>Durasi tidur</h2><p>7 entri terakhir</p></div></div><div id="sleepStats"></div><div id="sleepChart" class="chart-wrap"></div></article>
+          </div>
+          <article class="panel space-top"><div class="panel-head"><div><h2>Riwayat progres</h2><p>Berat badan dan tidur terbaru</p></div></div><div id="progressHistory" class="history-grid"></div></article>
+        </section>
+
+        <section id="page-gym" class="page" aria-label="Catatan gym">
+          <div class="page-heading"><div><p class="eyebrow">STRENGTH JOURNAL</p><h1>Workout log</h1><p class="subheading">Catat gerakan, tiap set, repetisi, dan beban.</p></div></div>
+          <div class="two-column">
+            <article class="panel"><div class="panel-head"><div><h2>Tambah latihan</h2><p>Satu gerakan bisa punya beban/reps berbeda per set</p></div><span class="panel-icon">▤</span></div>
+              <form id="workoutForm" class="form-stack">
+                <div class="field"><label for="workoutDate">Tanggal latihan</label><input id="workoutDate" type="date" required></div>
+                <div class="field"><label for="exerciseName">Nama gerakan</label><input id="exerciseName" list="exerciseIdeas" maxlength="80" required placeholder="Contoh: Incline Dumbbell Press"><datalist id="exerciseIdeas"><option value="Bench Press"><option value="Incline Dumbbell Press"><option value="Machine Chest Press"><option value="Lat Pulldown"><option value="Seated Cable Row"><option value="Dumbbell Lateral Raise"><option value="Machine Shoulder Press"><option value="Leg Press"><option value="Hack Squat"><option value="Romanian Deadlift"><option value="Leg Extension"><option value="Leg Curl"><option value="Biceps Curl"><option value="Triceps Pushdown"><option value="Calf Raise"><option value="Back Extension"></datalist></div>
+                <div class="field"><label>Set latihan <span class="label-hint">(kg dan reps per set)</span></label><div id="setRows" class="set-rows"></div></div>
+                <button id="addSet" class="secondary-button" type="button">＋ Tambah set</button>
+                <div class="field"><label for="workoutNote">Catatan (opsional)</label><input id="workoutNote" maxlength="150" placeholder="Contoh: RIR 2, teknik bagus"></div>
+                <button id="workoutSubmit" class="primary-button" type="submit">Simpan latihan</button>
+                <button id="cancelWorkoutEdit" class="ghost-button hidden" type="button">Batal edit</button>
+              </form>
+            </article>
+            <article class="panel"><div class="panel-head"><div><h2>Konsistensi latihan</h2><p>Streak berdasarkan target sesi per minggu</p></div><span class="panel-icon">✦</span></div><div id="workoutStats"></div><p class="tiny-note">Istirahat bukan kegagalan. Streak dihitung dari minggu yang memenuhi target, bukan latihan setiap hari.</p></article>
+          </div>
+          <article class="panel space-top"><div class="panel-head"><div><h2>Riwayat gym</h2><p>Data diurutkan berdasarkan tanggal</p></div></div><div id="workoutList"></div></article>
+        </section>
+
+        <section id="page-pengaturan" class="page" aria-label="Pengaturan dan privasi">
+          <div class="page-heading"><div><p class="eyebrow">YOUR DATA, YOUR CONTROL</p><h1>Pengaturan</h1><p class="subheading">Atur target dan kendalikan data pribadi.</p></div></div>
+          <div class="two-column"><article class="panel"><div class="panel-head"><div><h2>Profil & target</h2><p>Kalori dihitung sebagai estimasi awal</p></div></div><div id="settingsProfile"></div><button id="settingsEdit" class="secondary-button">Edit profil & target</button></article>
+          <article class="panel"><div class="panel-head"><div><h2>Backup & pemindahan</h2><p>Jangan kehilangan histori saat ganti perangkat</p></div></div><p class="muted">Data tersimpan di browser perangkat ini. Kalau browser dihapus atau ganti HP, data tidak otomatis berpindah.</p><div class="form-stack"><button id="exportData" class="primary-button">↓ Ekspor backup JSON</button><label class="upload-label" for="importData">↑ Impor backup JSON</label><input type="file" id="importData" accept=".json,application/json" class="visually-hidden"><button id="resetData" class="danger-button">Hapus semua data lokal</button></div></article></div>
+          <article class="panel space-top"><div class="panel-head"><div><h2>Catatan penting</h2></div></div><div class="notes-grid"><p><strong>Privasi.</strong> Tidak ada login, server, atau sinkronisasi. Link websitenya publik, tetapi catatan pengunjung hanya ada di browser masing-masing. Jangan memakai browser bersama tanpa memisahkan data.</p><p><strong>Akurasi.</strong> Angka makanan umum merupakan perkiraan per 100 g. Resep, minyak, cara memasak, dan label makanan dapat mengubah hasil.</p><p><strong>TDEE.</strong> Rumus Mifflin–St Jeor ditambah faktor aktivitas memberikan estimasi, bukan pengukuran. Evaluasi dari tren berat beberapa minggu sebelum mengubah target.</p><p><strong>Aktivitas.</strong> Kalori latihan beban tidak otomatis ditambahkan ke jatah makan agar tidak berisiko menghitung aktivitas dua kali.</p></div></article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Navigasi mobile">
+    <button class="bottom-button active" data-nav="beranda"><span>◫</span><small>Beranda</small></button>
+    <button class="bottom-button" data-nav="makanan"><span>◉</span><small>Makan</small></button>
+    <button class="bottom-button" data-nav="progres"><span>↗</span><small>Progres</small></button>
+    <button class="bottom-button" data-nav="gym"><span>▤</span><small>Gym</small></button>
+    <button class="bottom-button" data-nav="pengaturan"><span>⚙</span><small>Atur</small></button>
+  </nav>
+
+  <dialog id="profileDialog" class="profile-dialog">
+    <form id="profileForm" class="profile-form">
+      <div class="dialog-header"><div><p class="eyebrow">YOUR STARTING POINT</p><h2 id="profileHeading">Bikin profil dulu, yuk.</h2><p class="muted">Tidak perlu akun. Semua bisa diubah nanti.</p></div><button type="button" id="closeProfile" class="close-button" aria-label="Tutup">×</button></div>
+      <div class="form-row"><div class="field"><label for="profileName">Nama panggilan</label><input id="profileName" maxlength="40" required placeholder="Nama kamu"></div><div class="field"><label for="profileSex">Jenis kelamin untuk rumus BMR</label><select id="profileSex" required><option value="male">Laki-laki</option><option value="female">Perempuan</option></select></div></div>
+      <div class="form-row triple"><div class="field"><label for="profileAge">Umur (tahun)</label><input id="profileAge" type="number" min="18" max="100" value="20" required></div><div class="field"><label for="profileHeight">Tinggi (cm)</label><input id="profileHeight" type="number" min="100" max="240" value="167" step="0.1" required></div><div class="field"><label for="profileWeight">Berat (kg)</label><input id="profileWeight" type="number" min="20" max="400" value="78" step="0.01" required></div></div>
+      <div class="form-row"><div class="field"><label for="profileGoal">Tujuan utama</label><select id="profileGoal"><option value="cut">Cutting / defisit</option><option value="maintain">Maintenance</option><option value="bulk">Bulking / surplus</option></select></div><div class="field"><label for="profileActivity">Aktivitas harian</label><select id="profileActivity"><option value="1.2">Sedentari / jarang bergerak</option><option value="1.375">Ringan (±1–3 sesi/minggu)</option><option value="1.55" selected>Moderat (±3–5 sesi/minggu)</option><option value="1.725">Sangat aktif (latihan & aktif harian)</option></select></div></div>
+      <div class="form-row"><div class="field"><label for="profileAdjustment">Defisit / surplus (kcal)</label><select id="profileAdjustment"><option value="200">200 — konservatif</option><option value="300" selected>300 — moderat</option><option value="500">500 — lebih agresif</option></select></div><div class="field"><label for="profileWeekly">Target gym per minggu</label><select id="profileWeekly"><option value="2">2 sesi</option><option value="3">3 sesi</option><option value="4" selected>4 sesi</option><option value="5">5 sesi</option><option value="6">6 sesi</option></select></div></div>
+      <label class="check-row"><input type="checkbox" id="manualCalToggle"> Gunakan target kalori manual</label>
+      <div class="form-row"><div class="field"><label for="profileCalories">Target kalori (kcal/hari)</label><input id="profileCalories" type="number" min="1200" max="8000" step="1" required></div><div class="field"><label for="profileProtein">Target protein (g/hari)</label><input id="profileProtein" type="number" min="0" max="500" step="1" required></div></div>
+      <div id="profileEstimate" class="preview-box"></div>
+      <p class="tiny-note">Rumus BMR Mifflin–St Jeor memakai kategori jenis kelamin sebagai parameter. Hasil kalori hanya estimasi awal, bukan anjuran medis personal.</p>
+      <button type="submit" class="primary-button">Simpan & mulai tracking →</button>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
