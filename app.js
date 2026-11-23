@@ -33,12 +33,12 @@ const shiftDate = (s,delta) => {const [y,m,d]=s.split('-').map(Number);const dat
 const dateLabel = s => {if(!validDate(s))return s;return new Date(`${s}T12:00:00`).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});};
 const weekStart = iso => {const d=new Date(`${iso}T12:00:00`);return shiftDate(iso,-((d.getDay()+6)%7));};
 const makeId = () => (typeof crypto!=='undefined' && typeof crypto.randomUUID==='function') ? crypto.randomUUID() : `i${Date.now()}${Math.random().toString(36).slice(2)}`;
-const emptyState = () => ({version:1,profile:null,customFoods:[],foodLogs:[],weights:[],sleep:[],workouts:[]});
+const emptyState = () => ({version:1,profile:null,customFoods:[],customExercises:[],foodLogs:[],weights:[],sleep:[],workouts:[]});
 let state = loadState();
 let editingFoodId=null, editingWorkoutId=null, toastTimer;
 
 function loadState(){
-  try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return emptyState();const data=JSON.parse(raw);if(!data || typeof data!=='object')return emptyState();return {...emptyState(),...data,customFoods:Array.isArray(data.customFoods)?data.customFoods:[],foodLogs:Array.isArray(data.foodLogs)?data.foodLogs:[],weights:Array.isArray(data.weights)?data.weights:[],sleep:Array.isArray(data.sleep)?data.sleep:[],workouts:Array.isArray(data.workouts)?data.workouts:[]};}
+  try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return emptyState();const data=JSON.parse(raw);if(!data || typeof data!=='object')return emptyState();return {...emptyState(),...data,customFoods:Array.isArray(data.customFoods)?data.customFoods:[],customExercises:Array.isArray(data.customExercises)?data.customExercises:[],foodLogs:Array.isArray(data.foodLogs)?data.foodLogs:[],weights:Array.isArray(data.weights)?data.weights:[],sleep:Array.isArray(data.sleep)?data.sleep:[],workouts:Array.isArray(data.workouts)?data.workouts:[]};}
   catch(err){console.warn('Data tidak dapat dibaca:',err);return emptyState();}
 }
 function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return true;}catch(err){toast('Gagal menyimpan. Periksa penyimpanan browser.',true);console.error(err);return false;}}
@@ -171,10 +171,45 @@ function renderProgressHistory(){
 function handleWeight(event){event.preventDefault();const date=$('#weightDate').value,kg=num($('#weightValue').value);if(!validDate(date)||kg<20||kg>400){toast('Isi tanggal dan berat yang valid.',true);return;}const old=state.weights.find(x=>x.date===date);if(old)old.kg=kg;else state.weights.push({date,kg});if(save()){renderAll();toast('Berat badan dicatat.');}}
 function handleSleep(event){event.preventDefault();const date=$('#sleepDate').value,bed=$('#bedTime').value,wake=$('#wakeTime').value,quality=$('#sleepQuality').value,h=durationHours(bed,wake);if(!validDate(date)||h<=0||h>16||!/^\d{2}:\d{2}$/.test(bed)||!/^\d{2}:\d{2}$/.test(wake)){toast('Periksa jam tidur. Durasi harus >0 dan ≤16 jam.',true);return;}const old=state.sleep.find(x=>x.date===date);if(old)Object.assign(old,{bed,wake,quality});else state.sleep.push({date,bed,wake,quality});if(save()){renderAll();toast('Tidur dicatat.');}}
 
+// Exercise library is stored locally and also rebuilt from old workout history.
+// This keeps names from previous v1 records available without data migration.
+function exerciseKey(name){return String(name||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('id-ID');}
+function exerciseNames(){
+  const unique=new Map();
+  for(const name of state.customExercises||[]){if(typeof name==='string'&&name.trim()&&name.length<=80)unique.set(exerciseKey(name),name.trim());}
+  for(const item of state.workouts){if(typeof item.exercise==='string'&&item.exercise.trim()){
+    const key=exerciseKey(item.exercise);if(!unique.has(key))unique.set(key,item.exercise.trim());
+  }}
+  return [...unique.values()].sort((a,b)=>a.localeCompare(b,'id-ID'));
+}
+function refreshExerciseIdeas(){
+  const list=$('#exerciseIdeas');
+  list.querySelectorAll('option[data-custom-exercise]').forEach(option=>option.remove());
+  const baseNames=new Set([...list.options].map(option=>exerciseKey(option.value)));
+  for(const name of exerciseNames()){
+    if(baseNames.has(exerciseKey(name)))continue;
+    const option=document.createElement('option');option.value=name;option.dataset.customExercise='true';
+    list.appendChild(option);
+  }
+  renderExerciseLastSets();
+}
+function renderExerciseLastSets(){
+  const hint=$('#exerciseLastSets');if(!hint)return;
+  const name=exerciseKey($('#exerciseName').value);
+  if(!name){hint.textContent='Gerakan yang sudah pernah disimpan akan muncul sebagai saran otomatis.';return;}
+  const latest=state.workouts.filter(w=>w.id!==editingWorkoutId&&exerciseKey(w.exercise)===name)
+    .sort((a,b)=>b.date.localeCompare(a.date))[0];
+  if(!latest){hint.textContent='Belum ada riwayat untuk gerakan ini.';return;}
+  hint.textContent=`Terakhir (${dateLabel(latest.date)}): `+latest.sets.map((set,i)=>`Set ${i+1} ${fmt(set.weight,2)} kg × ${fmt(set.reps)}`).join(' • ');
+}
+function storeExerciseName(name){
+  const clean=name.trim().replace(/\s+/g,' '),key=exerciseKey(clean);
+  if(!(state.customExercises||[]).some(item=>exerciseKey(item)===key))state.customExercises.push(clean);
+}
 function currentSets(){return $$('#setRows .set-row').map(row=>({weight:num(row.querySelector('.set-weight').value),reps:num(row.querySelector('.set-reps').value)}));}
 function renderSetRows(sets){$('#setRows').innerHTML=`<div class="set-row-legend"><span>SET</span><span>BEBAN (KG)</span><span>REPS</span><span></span></div>`+sets.map((set,i)=>`<div class="set-row" data-set-index="${i}"><span class="set-index">#${i+1}</span><input class="set-weight" aria-label="Beban set ${i+1} kg" type="number" min="0" max="1000" step="0.25" value="${num(set.weight)}" required><input class="set-reps" aria-label="Repetisi set ${i+1}" type="number" min="1" max="200" step="1" value="${num(set.reps,10)}" required><button class="mini-remove" type="button" aria-label="Hapus set ${i+1}" data-action="remove-set" data-index="${i}">×</button></div>`).join('');}
-function clearWorkoutEdit(){editingWorkoutId=null;$('#workoutSubmit').textContent='Simpan latihan';$('#cancelWorkoutEdit').classList.add('hidden');$('#workoutNote').value='';$('#exerciseName').value='';renderSetRows([{weight:0,reps:10}]);}
-function handleWorkout(event){event.preventDefault();const date=$('#workoutDate').value,exercise=$('#exerciseName').value.trim(),note=$('#workoutNote').value.trim(),sets=currentSets();if(!validDate(date)||!exercise||exercise.length>80||!sets.length||sets.length>15||sets.some(s=>s.weight<0||s.weight>1000||s.reps<1||s.reps>200||!Number.isInteger(s.reps))){toast('Cek nama gerakan, beban, dan repetisi tiap set.',true);return;}if(editingWorkoutId){const old=state.workouts.find(x=>x.id===editingWorkoutId);if(old)Object.assign(old,{date,exercise,sets,note});}else state.workouts.push({id:makeId(),date,exercise,sets,note});if(save()){const wasEditing=!!editingWorkoutId;clearWorkoutEdit();renderAll();toast(wasEditing?'Latihan diperbarui.':'Latihan berhasil dicatat.');}}
+function clearWorkoutEdit(){editingWorkoutId=null;$('#workoutSubmit').textContent='Simpan latihan';$('#cancelWorkoutEdit').classList.add('hidden');$('#workoutNote').value='';$('#exerciseName').value='';renderSetRows([{weight:0,reps:10}]);renderExerciseLastSets();}
+function handleWorkout(event){event.preventDefault();const date=$('#workoutDate').value,exercise=$('#exerciseName').value.trim(),note=$('#workoutNote').value.trim(),sets=currentSets();if(!validDate(date)||!exercise||exercise.length>80||!sets.length||sets.length>15||sets.some(s=>s.weight<0||s.weight>1000||s.reps<1||s.reps>200||!Number.isInteger(s.reps))){toast('Cek nama gerakan, beban, dan repetisi tiap set.',true);return;}if(editingWorkoutId){const old=state.workouts.find(x=>x.id===editingWorkoutId);if(old)Object.assign(old,{date,exercise,sets,note});}else state.workouts.push({id:makeId(),date,exercise,sets,note});storeExerciseName(exercise);if(save()){const wasEditing=!!editingWorkoutId;clearWorkoutEdit();renderAll();toast(wasEditing?'Latihan diperbarui.':'Latihan berhasil dicatat.');}}
 function renderWorkoutStats(){const count=getWeeklyWorkoutCount(),target=num(state.profile?.weekly,4),week=weekStart(today());$('#workoutStats').innerHTML=`<div class="week-goal"><div class="goal-ring" style="--progress:${percent(count,target)}%"><div class="goal-ring-inner">${count}/${target}</div></div><div><strong>${count>=target?'Target tercapai!':'Terus konsisten'}</strong><small>${html(dateLabel(week))} – ${html(dateLabel(shiftDate(week,6)))}</small></div></div><div class="streak-line">🔥 <b>${workoutStreak()}</b> minggu memenuhi target berturut-turut</div><div class="mini-kpi" style="margin-top:16px"><div class="kpi-box"><div class="kpi-value">${new Set(state.workouts.map(w=>w.date)).size}</div><div class="kpi-label">Total hari latihan</div></div><div class="kpi-box"><div class="kpi-value">${state.workouts.reduce((acc,w)=>acc+(w.sets?.length||0),0)}</div><div class="kpi-label">Total set tercatat</div></div></div>`;}
 function renderWorkoutList(){
   const items=[...state.workouts].sort((a,b)=>b.date.localeCompare(a.date));
@@ -183,7 +218,7 @@ function renderWorkoutList(){
   $('#workoutList').innerHTML=[...groups.entries()].map(([date,logs])=>`<div class="group-heading">${html(dateLabel(date))} • ${logs.length} gerakan</div>${logs.map(log=>`<div class="workout-card"><div class="workout-card-top"><div><div class="entry-title">${html(log.exercise)}</div><div class="entry-meta">${log.sets.length} set${log.note?' • '+html(log.note):''}</div></div><div class="workout-actions"><button class="text-button" data-action="edit-workout" data-id="${html(log.id)}">Ubah</button><button class="text-button danger" data-action="delete-workout" data-id="${html(log.id)}">Hapus</button></div></div><div class="sets-pills">${log.sets.map((s,i)=>`<span class="set-pill">Set ${i+1}: ${fmt(s.weight,2)} kg × ${fmt(s.reps)}</span>`).join('')}</div></div>`).join('')}`).join('');
 }
 function renderSettings(){const p=state.profile,m=goalMacros();$('#settingsProfile').innerHTML=`<div class="list-stack" style="margin-bottom:22px"><div class="list-entry"><span class="muted small">Nama</span><strong>${html(p.name)}</strong></div><div class="list-entry"><span class="muted small">Profil</span><strong>${fmt(p.age)} th • ${fmt(p.height)} cm • ${fmt(p.weight,2)} kg</strong></div><div class="list-entry"><span class="muted small">Tujuan</span><strong>${p.goal==='cut'?'Cutting':p.goal==='bulk'?'Bulking':'Maintenance'}</strong></div><div class="list-entry"><span class="muted small">BMR / TDEE estimasi</span><strong>${fmt(Math.round(getTdee(p)/num(p.activity,1.55)))} / ${fmt(getTdee(p))} kcal</strong></div><div class="list-entry"><span class="muted small">Target kalori</span><strong>${fmt(m.calories)} kcal/hari</strong></div><div class="list-entry"><span class="muted small">Protein</span><strong>${fmt(m.protein)} g/hari</strong></div><div class="list-entry"><span class="muted small">Target gym</span><strong>${fmt(p.weekly)} hari/minggu</strong></div></div>`;}
-function renderAll(){if(!state.profile)return;renderDashboard();renderFoods();renderWeight();renderSleep();renderProgressHistory();renderWorkoutStats();renderWorkoutList();renderSettings();}
+function renderAll(){if(!state.profile)return;renderDashboard();renderFoods();renderWeight();renderSleep();renderProgressHistory();renderWorkoutStats();renderWorkoutList();refreshExerciseIdeas();renderSettings();}
 
 // First run and profile: compact onboarding, formulas shown transparently.
 function openProfile(){const p=state.profile;$('#profileHeading').textContent=p?'Edit profil & target':'Bikin profil dulu, yuk.';$('#closeProfile').classList.toggle('hidden',!p);
@@ -209,6 +244,7 @@ function isValidBackup(data){
   if(!data||typeof data!=='object'||data.version!==1||!data.profile||typeof data.profile!=='object')return false;
   const p=data.profile;if(typeof p.name!=='string'||!p.name.trim()||p.name.length>40||!['male','female'].includes(p.sex)||!['cut','bulk','maintain'].includes(p.goal)||num(p.age)<18||num(p.age)>100||num(p.height)<100||num(p.height)>240||num(p.weight)<20||num(p.weight)>400||num(p.calories)<1200||num(p.calories)>8000||num(p.protein)<0||num(p.protein)>500||num(p.weekly)<2||num(p.weekly)>6||![1.2,1.375,1.55,1.725].includes(num(p.activity)))return false;
   if(!['customFoods','foodLogs','weights','sleep','workouts'].every(k=>Array.isArray(data[k])&&data[k].length<10000))return false;
+  if(data.customExercises!==undefined&&(!Array.isArray(data.customExercises)||data.customExercises.length>=10000||!data.customExercises.every(n=>typeof n==='string'&&n.trim().length>0&&n.length<=80)))return false;
   const customs=data.customFoods;if(!customs.every(f=>typeof f.id==='string'&&f.id.startsWith('custom-')&&typeof f.name==='string'&&f.name.length<=75&&f.name.length>0&&['kcal','p','c','f'].every(k=>Number.isFinite(f[k])&&f[k]>=0&&f[k]<=1000)&&typeof f.source==='string'&&f.source.length<=150))return false;
   const foodIds=new Set([...DEFAULT_FOODS,...customs].map(f=>f.id));
   if(!data.foodLogs.every(r=>typeof r.id==='string'&&foodIds.has(r.foodId)&&validDate(r.date)&&MEALS.includes(r.meal)&&Number.isFinite(r.grams)&&r.grams>0&&r.grams<=10000))return false;
@@ -217,7 +253,7 @@ function isValidBackup(data){
   if(!data.workouts.every(r=>typeof r.id==='string'&&validDate(r.date)&&typeof r.exercise==='string'&&r.exercise.length>0&&r.exercise.length<=80&&typeof r.note==='string'&&r.note.length<=150&&Array.isArray(r.sets)&&r.sets.length>=1&&r.sets.length<=15&&r.sets.every(s=>Number.isFinite(s.weight)&&s.weight>=0&&s.weight<=1000&&Number.isInteger(s.reps)&&s.reps>=1&&s.reps<=200)))return false;
   return true;
 }
-async function importBackup(event){const file=event.target.files?.[0];event.target.value='';if(!file)return;if(file.size>3*1024*1024){toast('File terlalu besar (maksimum 3 MB).',true);return;}try{const parsed=JSON.parse(await file.text());if(!isValidBackup(parsed)){toast('Format backup tidak cocok atau ada data yang tidak valid.',true);return;}if(!confirm('Impor akan MENGGANTI semua data lokal di perangkat ini. Sudah ekspor backup data lama?'))return;const prior=state;state={version:1,profile:parsed.profile,customFoods:parsed.customFoods,foodLogs:parsed.foodLogs,weights:parsed.weights,sleep:parsed.sleep,workouts:parsed.workouts};if(!save()){state=prior;return;}clearFoodEdit();clearWorkoutEdit();renderFoodOptions();renderAll();toast('Backup berhasil dipulihkan.');}catch(err){console.error(err);toast('Gagal membaca file backup JSON.',true);}}
+async function importBackup(event){const file=event.target.files?.[0];event.target.value='';if(!file)return;if(file.size>3*1024*1024){toast('File terlalu besar (maksimum 3 MB).',true);return;}try{const parsed=JSON.parse(await file.text());if(!isValidBackup(parsed)){toast('Format backup tidak cocok atau ada data yang tidak valid.',true);return;}if(!confirm('Impor akan MENGGANTI semua data lokal di perangkat ini. Sudah ekspor backup data lama?'))return;const prior=state;state={version:1,profile:parsed.profile,customFoods:parsed.customFoods,customExercises:parsed.customExercises||[],foodLogs:parsed.foodLogs,weights:parsed.weights,sleep:parsed.sleep,workouts:parsed.workouts};if(!save()){state=prior;return;}clearFoodEdit();clearWorkoutEdit();renderFoodOptions();renderAll();toast('Backup berhasil dipulihkan.');}catch(err){console.error(err);toast('Gagal membaca file backup JSON.',true);}}
 function resetEverything(){const answer=prompt('Semua data akan DIHAPUS dari browser ini dan tidak bisa dikembalikan tanpa backup. Ketik HAPUS untuk melanjutkan:');if(answer!=='HAPUS')return;try{localStorage.removeItem(STORAGE_KEY);state=emptyState();clearFoodEdit();clearWorkoutEdit();renderFoodOptions();renderAll();openProfile();toast('Data lokal dihapus.');}catch(err){toast('Gagal menghapus data lokal.',true);}}
 
 function handleActions(event){
@@ -234,7 +270,7 @@ function handleActions(event){
   if(action==='delete-sleep'){if(!confirm('Hapus catatan tidur ini?'))return;state.sleep=state.sleep.filter(x=>x.date!==date);if(save()){renderAll();toast('Catatan tidur dihapus.');}return;}
   if(action==='remove-set'){const sets=currentSets();if(sets.length<=1){toast('Minimal satu set.',true);return;}sets.splice(Number(button.dataset.index),1);renderSetRows(sets);return;}
   if(action==='edit-workout'){
-    const log=state.workouts.find(x=>x.id===id);if(!log)return;editingWorkoutId=id;$('#workoutDate').value=log.date;$('#exerciseName').value=log.exercise;$('#workoutNote').value=log.note;renderSetRows(log.sets);$('#workoutSubmit').textContent='Simpan perubahan';$('#cancelWorkoutEdit').classList.remove('hidden');$('#workoutForm').scrollIntoView({behavior:'smooth',block:'start'});return;
+    const log=state.workouts.find(x=>x.id===id);if(!log)return;editingWorkoutId=id;$('#workoutDate').value=log.date;$('#exerciseName').value=log.exercise;$('#workoutNote').value=log.note;renderSetRows(log.sets);renderExerciseLastSets();$('#workoutSubmit').textContent='Simpan perubahan';$('#cancelWorkoutEdit').classList.remove('hidden');$('#workoutForm').scrollIntoView({behavior:'smooth',block:'start'});return;
   }
   if(action==='delete-workout'){if(!confirm('Hapus gerakan dan semua set-nya?'))return;state.workouts=state.workouts.filter(x=>x.id!==id);if(editingWorkoutId===id)clearWorkoutEdit();if(save()){renderAll();toast('Latihan dihapus.');}return;}
 }
@@ -251,6 +287,8 @@ function bind(){
   $('#weightForm').addEventListener('submit',handleWeight);
   $('#sleepForm').addEventListener('submit',handleSleep);
   $('#workoutForm').addEventListener('submit',handleWorkout);
+  $('#exerciseName').addEventListener('input',renderExerciseLastSets);
+  $('#workoutDate').addEventListener('change',renderExerciseLastSets);
   $('#addSet').addEventListener('click',()=>{const sets=currentSets();if(sets.length>=15){toast('Maksimal 15 set per gerakan.',true);return;}sets.push({...sets[sets.length-1]});renderSetRows(sets);});
   $('#cancelWorkoutEdit').addEventListener('click',clearWorkoutEdit);
   $('#profileForm').addEventListener('submit',handleProfile);
@@ -264,5 +302,5 @@ function bind(){
   $('#resetData').addEventListener('click',resetEverything);
   window.addEventListener('hashchange',()=>navigate(location.hash.slice(1)||'beranda'));
 }
-function init(){const d=today();for(const id of ['foodDate','weightDate','sleepDate','workoutDate'])$('#'+id).value=d;renderSetRows([{weight:0,reps:10}]);renderFoodOptions();bind();navigate(location.hash.slice(1)||'beranda');if(state.profile)renderAll();else openProfile();}
+function init(){const hint=document.createElement('p');hint.id='exerciseLastSets';hint.className='tiny-note';hint.setAttribute('aria-live','polite');$('#exerciseName').insertAdjacentElement('afterend',hint);const d=today();for(const id of ['foodDate','weightDate','sleepDate','workoutDate'])$('#'+id).value=d;renderSetRows([{weight:0,reps:10}]);renderFoodOptions();refreshExerciseIdeas();bind();navigate(location.hash.slice(1)||'beranda');if(state.profile)renderAll();else openProfile();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
